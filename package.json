@@ -1,0 +1,35 @@
+{
+  "name": "@mtsmfm/comfypod",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "comfypod": "./dist/src/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/types.d.ts",
+      "default": "./dist/src/types.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "cli": "npm run build && node --import jiti/register src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.27.2",
+    "openapi-typescript": "^7.10.1",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "commander": "^14.0.2",
+    "jiti": "^2.6.1",
+    "openapi-fetch": "^0.15.0"
+  }
+}
