@@ -1,6 +1,6 @@
 {
   "name": "@mtsmfm/comfypod",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "bin": {
     "comfypod": "./dist/src/index.js"
@@ -22,13 +22,13 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "esbuild": "^0.27.2",
     "openapi-typescript": "^7.10.1",
     "prettier": "^3.0.0",
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "commander": "^14.0.2",
+    "esbuild": "^0.27.3",
     "jiti": "^2.6.1",
     "openapi-fetch": "^0.15.0"
   }
