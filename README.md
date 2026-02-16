@@ -59,29 +59,29 @@ Tokens default to environment variables (`RUNPOD_API_KEY`, `HF_TOKEN`, `CIVITAI_
 
 ```bash
 # Estimate network volume size needed
-npx comfypod estimate
+npx @mtsmfm/comfypod estimate
 
 # Download models to network volume (uses cheap CPU pod)
-npx comfypod setup
+npx @mtsmfm/comfypod setup
 
 # Start GPU pod with ComfyUI
-npx comfypod start
+npx @mtsmfm/comfypod start
 
 # Check status
-npx comfypod status
+npx @mtsmfm/comfypod status
 
 # Stop and delete GPU pod (keeps network volume)
-npx comfypod stop
+npx @mtsmfm/comfypod stop
 
 # Delete everything including network volume
-npx comfypod cleanup
+npx @mtsmfm/comfypod cleanup
 ```
 
 ### Options
 
 ```bash
-npx comfypod <command> --config <path>
-npx comfypod <command> -c <path>
+npx @mtsmfm/comfypod <command> --config <path>
+npx @mtsmfm/comfypod <command> -c <path>
 ```
 
 ## Configuration
