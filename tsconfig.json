@@ -12,7 +12,8 @@
     "baseUrl": ".",
     "paths": {
       "comfypod": ["./src/types.ts"]
-    }
+    },
+    "rootDir": "."
   },
   "include": ["src/**/*", "comfypod.config*.ts"]
 }
