@@ -86,30 +86,30 @@ npx comfypod <command> -c <path>
 
 ## Configuration
 
-| Option                 | Description              | Default                         |
-| ---------------------- | ------------------------ | ------------------------------- |
-| `dataCenterId`         | RunPod data center ID    | (required)                      |
-| `tokens.runpodApiKey`  | RunPod API key           | `$RUNPOD_API_KEY`               |
-| `tokens.hfToken`       | HuggingFace token        | `$HF_TOKEN`                     |
-| `tokens.civitaiToken`  | Civitai token            | `$CIVITAI_TOKEN`                |
-| `networkVolume.name`   | Network volume name      | `comfyui-models`                |
-| `networkVolume.sizeGb` | Network volume size (GB) | `50`                            |
-| `cpu.podName`          | CPU pod name             | `comfyui-downloader`            |
-| `cpu.image`            | CPU pod Docker image     | `node:24-slim`                  |
-| `cpu.flavorIds`        | CPU flavor IDs           | `["cpu3c"]`                     |
-| `cpu.volumeMountPath`  | Volume mount path (CPU)  | `/workspace`                    |
-| `gpu.podName`          | GPU pod name             | `comfyui-gpu`                   |
-| `gpu.image`            | GPU pod Docker image     | `yanwk/comfyui-boot:cu128-slim` |
-| `gpu.typeIds`          | GPU types to use         | (required)                      |
-| `gpu.entrypoint`       | Entrypoint script        | `/runner-scripts/entrypoint.sh` |
-| `gpu.proxyPort`        | Proxy port               | `80`                            |
-| `gpu.targetPort`       | ComfyUI port             | `8188`                          |
-| `gpu.volumeMountPath`  | Volume mount path (GPU)  | `/root/ComfyUI/models`          |
-| `gpu.customNodesDir`   | Custom nodes directory   | `/root/ComfyUI/custom_nodes`    |
-| `gpu.preCommands`      | Commands to run before entrypoint | `[]`                   |
+| Option                 | Description                       | Default                         |
+| ---------------------- | --------------------------------- | ------------------------------- |
+| `dataCenterId`         | RunPod data center ID             | (required)                      |
+| `tokens.runpodApiKey`  | RunPod API key                    | `$RUNPOD_API_KEY`               |
+| `tokens.hfToken`       | HuggingFace token                 | `$HF_TOKEN`                     |
+| `tokens.civitaiToken`  | Civitai token                     | `$CIVITAI_TOKEN`                |
+| `networkVolume.name`   | Network volume name               | `comfyui-models`                |
+| `networkVolume.sizeGb` | Network volume size (GB)          | `50`                            |
+| `cpu.podName`          | CPU pod name                      | `comfyui-downloader`            |
+| `cpu.image`            | CPU pod Docker image              | `node:24-slim`                  |
+| `cpu.flavorIds`        | CPU flavor IDs                    | `["cpu3c"]`                     |
+| `cpu.volumeMountPath`  | Volume mount path (CPU)           | `/workspace`                    |
+| `gpu.podName`          | GPU pod name                      | `comfyui-gpu`                   |
+| `gpu.image`            | GPU pod Docker image              | `yanwk/comfyui-boot:cu128-slim` |
+| `gpu.typeIds`          | GPU types to use                  | (required)                      |
+| `gpu.entrypoint`       | Entrypoint script                 | `/runner-scripts/entrypoint.sh` |
+| `gpu.proxyPort`        | Proxy port                        | `80`                            |
+| `gpu.targetPort`       | ComfyUI port                      | `8188`                          |
+| `gpu.volumeMountPath`  | Volume mount path (GPU)           | `/root/ComfyUI/models`          |
+| `gpu.customNodesDir`   | Custom nodes directory            | `/root/ComfyUI/custom_nodes`    |
+| `gpu.preCommands`      | Commands to run before entrypoint | `[]`                            |
 | `gpu.env`              | Environment variables for GPU pod | `{ CLI_ARGS: "--cache-lru 0" }` |
-| `models`               | Models to download       | `[]`                            |
-| `customNodes`          | Custom nodes to install  | `[]`                            |
+| `models`               | Models to download                | `[]`                            |
+| `customNodes`          | Custom nodes to install           | `[]`                            |
 
 ### Full Example
 
