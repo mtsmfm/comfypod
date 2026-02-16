@@ -1,4 +1,4 @@
-import { defineConfig } from "comfypod";
+import { defineConfig } from "@mtsmfm/comfypod";
 
 export default defineConfig({
   dataCenterId: "EU-CZ-1",

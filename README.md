@@ -28,7 +28,7 @@ comfypod solves these by:
 ## Installation
 
 ```bash
-npm install comfypod
+npm install @mtsmfm/comfypod
 ```
 
 ## Setup
@@ -36,7 +36,7 @@ npm install comfypod
 1. Create `comfypod.config.ts`:
 
 ```typescript
-import { defineConfig } from "comfypod";
+import { defineConfig } from "@mtsmfm/comfypod";
 
 export default defineConfig({
   dataCenterId: "EU-CZ-1",
@@ -114,7 +114,7 @@ npx comfypod <command> -c <path>
 ### Full Example
 
 ```typescript
-import { defineConfig } from "comfypod";
+import { defineConfig } from "@mtsmfm/comfypod";
 
 export default defineConfig({
   dataCenterId: "EU-CZ-1",
