@@ -1,3 +1,5 @@
+NOTE: This tool is mostly written by AI.
+
 # comfypod
 
 CLI tool for running ComfyUI on RunPod with persistent model storage.
