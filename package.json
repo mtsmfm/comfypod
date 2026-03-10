@@ -18,7 +18,8 @@
     "build": "tsc",
     "cli": "npm run build && node --import jiti/register src/index.ts",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "generate-api-types": "node --import jiti/register scripts/generate-api-types.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

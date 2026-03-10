@@ -109,7 +109,7 @@ export interface paths {
      * Update a Pod
      * @description Update a Pod - synonym for PATCH /pods/{podId}.
      */
-    post: operations["UpdatePod"];
+    post: operations["UpdatePodViaPost"];
     delete?: never;
     options?: never;
     head?: never;
@@ -261,7 +261,7 @@ export interface paths {
      * Update an endpoint
      * @description Update an endpoint - synonym for PATCH /endpoints/{endpointId}.
      */
-    post: operations["UpdateEndpoint"];
+    post: operations["UpdateEndpointViaPost"];
     delete?: never;
     options?: never;
     head?: never;
@@ -333,7 +333,7 @@ export interface paths {
      * Update a template
      * @description Update a template - synonym for PATCH /templates/{templateId}.
      */
-    post: operations["UpdateTemplate"];
+    post: operations["UpdateTemplateViaPost"];
     delete?: never;
     options?: never;
     head?: never;
@@ -405,7 +405,7 @@ export interface paths {
      * Update a network volume
      * @description Update a network volume - synonym for PATCH /networkvolumes/{networkVolumeId}.
      */
-    post: operations["UpdateNetworkVolume"];
+    post: operations["UpdateNetworkVolumeViaPost"];
     delete?: never;
     options?: never;
     head?: never;
@@ -850,6 +850,7 @@ export interface components {
     PodCreateInput: {
       /** @description If the created Pod is a GPU Pod, a list of acceptable CUDA versions on the [Pod](#/components/schemas/Pod). If not set, any CUDA version is acceptable. */
       allowedCudaVersions?: (
+        | "13.0"
         | "12.9"
         | "12.8"
         | "12.7"
@@ -1447,6 +1448,7 @@ export interface components {
     Endpoint: {
       /** @description A list of acceptable CUDA versions for the workers on a Serverless endpoint. If not set, any CUDA version is acceptable. */
       allowedCudaVersions?: (
+        | "13.0"
         | "12.9"
         | "12.8"
         | "12.7"
@@ -1617,6 +1619,23 @@ export interface components {
        */
       instanceIds?: string[];
       /**
+       * @description The minimum acceptable CUDA version for the workers on a Serverless endpoint.
+       * @enum {string}
+       */
+      minCudaVersion?:
+        | "13.0"
+        | "12.9"
+        | "12.8"
+        | "12.7"
+        | "12.6"
+        | "12.5"
+        | "12.4"
+        | "12.3"
+        | "12.2"
+        | "12.1"
+        | "12.0"
+        | "11.8";
+      /**
        * @description A user-defined name for a Serverless endpoint. The name does not need to be unique.
        * @example my endpoint
        */
@@ -1721,6 +1740,7 @@ export interface components {
     EndpointUpdateInput: {
       /** @description If the created Serverless endpoint is a GPU endpoint, a list of acceptable CUDA versions on the created workers. If not set, any CUDA version is acceptable. */
       allowedCudaVersions?: (
+        | "13.0"
         | "12.9"
         | "12.8"
         | "12.7"
@@ -1870,6 +1890,23 @@ export interface components {
        * @default 5
        */
       idleTimeout: number;
+      /**
+       * @description If the created Serverless endpoint is a GPU endpoint, the minimum acceptable CUDA version on the created workers.
+       * @enum {string}
+       */
+      minCudaVersion?:
+        | "13.0"
+        | "12.9"
+        | "12.8"
+        | "12.7"
+        | "12.6"
+        | "12.5"
+        | "12.4"
+        | "12.3"
+        | "12.2"
+        | "12.1"
+        | "12.0"
+        | "11.8";
       /** @description A user-defined name for the created Serverless endpoint. The name does not need to be unique. */
       name?: string;
       /** @description The unique string identifying the network volume to attach to the created Serverless endpoint. */
@@ -1911,6 +1948,7 @@ export interface components {
     EndpointCreateInput: {
       /** @description If the created Serverless endpoint is a GPU endpoint, a list of acceptable CUDA versions on the created workers. If not set, any CUDA version is acceptable. */
       allowedCudaVersions?: (
+        | "13.0"
         | "12.9"
         | "12.8"
         | "12.7"
@@ -2066,6 +2104,23 @@ export interface components {
        * @default 5
        */
       idleTimeout: number;
+      /**
+       * @description If the created Serverless endpoint is a GPU endpoint, the minimum acceptable CUDA version on the created workers.
+       * @enum {string}
+       */
+      minCudaVersion?:
+        | "13.0"
+        | "12.9"
+        | "12.8"
+        | "12.7"
+        | "12.6"
+        | "12.5"
+        | "12.4"
+        | "12.3"
+        | "12.2"
+        | "12.1"
+        | "12.0"
+        | "11.8";
       /** @description A user-defined name for the created Serverless endpoint. The name does not need to be unique. */
       name?: string;
       /** @description The unique string identifying the network volume to attach to the created Serverless endpoint. */
@@ -2604,7 +2659,7 @@ export interface operations {
       };
     };
   };
-  UpdatePod: {
+  UpdatePodViaPost: {
     parameters: {
       query?: never;
       header?: never;
@@ -2951,7 +3006,7 @@ export interface operations {
       };
     };
   };
-  UpdateEndpoint: {
+  UpdateEndpointViaPost: {
     parameters: {
       query?: never;
       header?: never;
@@ -3167,7 +3222,7 @@ export interface operations {
       };
     };
   };
-  UpdateTemplate: {
+  UpdateTemplateViaPost: {
     parameters: {
       query?: never;
       header?: never;
@@ -3375,7 +3430,7 @@ export interface operations {
       };
     };
   };
-  UpdateNetworkVolume: {
+  UpdateNetworkVolumeViaPost: {
     parameters: {
       query?: never;
       header?: never;
