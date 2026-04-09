@@ -209,7 +209,7 @@ export async function setup(config: Config) {
   }
 
   console.log("Bundling downloader...");
-  const downloaderPath = join(__dirname, "..", "downloader.ts");
+  const downloaderPath = join(__dirname, "..", "downloader.js");
   const result = await build({
     entryPoints: [downloaderPath],
     bundle: true,
