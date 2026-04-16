@@ -1,6 +1,16 @@
 import createClient from "openapi-fetch";
 import type { paths, components } from "./runpod-api.js";
 import { createSpinner } from "./spinner.js";
+import type {
+  CpuFlavorId,
+  DataCenterId,
+  GpuTypeId,
+} from "./runpod-gpu-types.js";
+import {
+  GraphQLUnauthorizedError,
+  podFindAndDeployOnDemand,
+  type PodFindAndDeployOnDemandInput,
+} from "./runpod-graphql.js";
 
 type RawPod = components["schemas"]["Pod"];
 type RawNetworkVolume = components["schemas"]["NetworkVolume"];
@@ -18,9 +28,9 @@ export interface PodCreateInput {
   name: string;
   imageName: string;
   computeType?: "GPU" | "CPU";
-  gpuTypeIds?: string[];
+  gpuTypeIds?: GpuTypeId[];
   gpuCount?: number;
-  cpuFlavorIds?: string[];
+  cpuFlavorIds?: CpuFlavorId[];
   networkVolumeId?: string;
   volumeMountPath?: string;
   volumeInGb?: number;
@@ -30,10 +40,51 @@ export interface PodCreateInput {
   dockerStartCmd?: string[];
 }
 
+// GraphQL's `dockerArgs` is a single string that gets passed to `docker run`.
+// REST's `dockerStartCmd` is an argv array. Base64-encode the script so we
+// never have to fight shell quoting for the `["bash", "-c", <script>]`
+// pattern that our commands use.
+function dockerStartCmdToDockerArgs(cmd: readonly string[]): string {
+  if (cmd.length === 3 && cmd[0] === "bash" && cmd[1] === "-c") {
+    const encoded = Buffer.from(cmd[2], "utf8").toString("base64");
+    return `bash -c 'echo ${encoded} | base64 -d | bash'`;
+  }
+  return cmd.join(" ");
+}
+
+function toGraphQLInput(
+  params: PodCreateInput,
+  gpuTypeId: GpuTypeId,
+): PodFindAndDeployOnDemandInput {
+  const env = params.env
+    ? Object.entries(params.env).map(([key, value]) => ({
+        key,
+        value: String(value),
+      }))
+    : undefined;
+  return {
+    name: params.name,
+    imageName: params.imageName,
+    gpuTypeId,
+    gpuCount: params.gpuCount,
+    volumeInGb: params.volumeInGb,
+    containerDiskInGb: params.containerDiskInGb,
+    volumeMountPath: params.volumeMountPath,
+    networkVolumeId: params.networkVolumeId,
+    ports: params.ports?.join(","),
+    env,
+    dockerArgs: params.dockerStartCmd
+      ? dockerStartCmdToDockerArgs(params.dockerStartCmd)
+      : undefined,
+  };
+}
+
 export class RunpodClient {
   private client: ReturnType<typeof createClient<paths>>;
+  private apiKey: string;
 
   constructor(apiKey: string) {
+    this.apiKey = apiKey;
     this.client = createClient<paths>({
       baseUrl: "https://rest.runpod.io/v1",
       headers: {
@@ -45,7 +96,7 @@ export class RunpodClient {
   async createNetworkVolume(
     name: string,
     size: number,
-    dataCenterId: string,
+    dataCenterId: DataCenterId,
   ): Promise<NetworkVolume> {
     const { data, error } = await this.client.POST("/networkvolumes", {
       body: { name, size, dataCenterId },
@@ -126,6 +177,16 @@ export class RunpodClient {
     params: PodCreateInput,
     retryTimeoutMs = 1800000,
   ): Promise<Pod> {
+    if (params.computeType === "CPU") {
+      return this.createCpuPodViaRest(params, retryTimeoutMs);
+    }
+    return this.createGpuPodViaGraphQL(params, retryTimeoutMs);
+  }
+
+  private async createCpuPodViaRest(
+    params: PodCreateInput,
+    retryTimeoutMs: number,
+  ): Promise<Pod> {
     const retryIntervalMs = 30000;
     const start = Date.now();
     let spinner: ReturnType<typeof createSpinner> | undefined;
@@ -157,6 +218,49 @@ export class RunpodClient {
         );
       } else {
         spinner.update(`Create pod failed: ${errorMessage}, retrying...`);
+      }
+      await new Promise((r) => setTimeout(r, retryIntervalMs));
+    }
+  }
+
+  private async createGpuPodViaGraphQL(
+    params: PodCreateInput,
+    retryTimeoutMs: number,
+  ): Promise<Pod> {
+    const gpuTypeIds = params.gpuTypeIds ?? [];
+    if (gpuTypeIds.length === 0) {
+      throw new Error("createPod requires at least one gpuTypeId");
+    }
+    const retryIntervalMs = 30000;
+    const start = Date.now();
+    let spinner: ReturnType<typeof createSpinner> | undefined;
+
+    for (;;) {
+      let lastError = "";
+      for (const gpuTypeId of gpuTypeIds) {
+        try {
+          const input = toGraphQLInput(params, gpuTypeId);
+          const { id } = await podFindAndDeployOnDemand(this.apiKey, input);
+          spinner?.stop("Pod created");
+          return await this.getPod(id);
+        } catch (e) {
+          if (e instanceof GraphQLUnauthorizedError) {
+            spinner?.stop(`Failed: ${e.message}`);
+            throw new Error(`Failed to create pod: ${e.message}`);
+          }
+          lastError = e instanceof Error ? e.message : String(e);
+        }
+      }
+
+      if (Date.now() - start >= retryTimeoutMs) {
+        spinner?.stop(`Failed: ${lastError}`);
+        throw new Error(`Failed to create pod: ${lastError}`);
+      }
+
+      if (!spinner) {
+        spinner = createSpinner(`Create pod failed: ${lastError}, retrying...`);
+      } else {
+        spinner.update(`Create pod failed: ${lastError}, retrying...`);
       }
       await new Promise((r) => setTimeout(r, retryIntervalMs));
     }

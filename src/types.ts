@@ -1,10 +1,10 @@
-import type { operations } from "./runpod-api.js";
+import type {
+  CpuFlavorId,
+  DataCenterId,
+  GpuTypeId,
+} from "./runpod-gpu-types.js";
 
-type CreatePodInput =
-  operations["CreatePod"]["requestBody"]["content"]["application/json"];
-
-export type CpuFlavorId = NonNullable<CreatePodInput["cpuFlavorIds"]>[number];
-export type GpuTypeId = NonNullable<CreatePodInput["gpuTypeIds"]>[number];
+export type { CpuFlavorId, DataCenterId, GpuTypeId };
 
 export interface Model {
   url: string;
@@ -74,7 +74,7 @@ export interface Tokens {
 }
 
 export interface ConfigInput {
-  dataCenterId: string;
+  dataCenterId: DataCenterId;
   tokens?: Tokens;
   networkVolume?: NetworkVolumeConfigInput;
   cpu?: CpuConfigInput;
@@ -84,7 +84,7 @@ export interface ConfigInput {
 }
 
 export interface Config {
-  dataCenterId: string;
+  dataCenterId: DataCenterId;
   tokens: Required<Tokens>;
   networkVolume: NetworkVolumeConfig;
   cpu: CpuConfig;
