@@ -26,6 +26,7 @@ comfypod solves these by:
 - Automatic model downloading from HuggingFace and Civitai
 - Custom node installation
 - Basic auth protection for web UI
+- Optional idle auto-termination to avoid paying for an unused GPU pod
 
 ## Installation
 
@@ -110,6 +111,7 @@ npx @mtsmfm/comfypod <command> -c <path>
 | `gpu.customNodesDir`   | Custom nodes directory            | `/root/ComfyUI/custom_nodes`    |
 | `gpu.preCommands`      | Commands to run before entrypoint | `[]`                            |
 | `gpu.env`              | Environment variables for GPU pod | `{ CLI_ARGS: "--cache-lru 0" }` |
+| `gpu.idleTimeoutMin`   | Auto-terminate the pod after this many minutes with an idle ComfyUI queue. `0` disables. | `0` |
 | `models`               | Models to download                | `[]`                            |
 | `customNodes`          | Custom nodes to install           | `[]`                            |
 
@@ -152,6 +154,7 @@ export default defineConfig({
     env: {
       CLI_ARGS: "--cache-lru 0",
     },
+    idleTimeoutMin: 30,
   },
 
   models: [
