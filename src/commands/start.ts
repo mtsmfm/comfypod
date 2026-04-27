@@ -115,6 +115,49 @@ ${installCommands}
 `;
 }
 
+function buildWatchdogLoop(
+  idleTimeoutMin: number,
+  targetPort: number,
+): string {
+  const timeoutSec = idleTimeoutMin * 60;
+
+  return `
+set +e
+echo "=== Idle watchdog active (timeout: ${idleTimeoutMin}min) ==="
+IDLE_TIMEOUT=${timeoutSec}
+LAST_ACTIVE=$(date +%s)
+
+while true; do
+  sleep 60
+
+  NOW=$(date +%s)
+
+  HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${targetPort}/ 2>/dev/null || echo "000")
+  if [ "$HEALTH" != "200" ]; then
+    LAST_ACTIVE=$NOW
+    continue
+  fi
+
+  QUEUE=$(curl -s http://localhost:${targetPort}/queue 2>/dev/null || echo "")
+  BUSY=0
+  echo "$QUEUE" | grep -q '\\[\\[' && BUSY=1
+
+  if [ "$BUSY" = "1" ]; then
+    LAST_ACTIVE=$NOW
+  fi
+
+  IDLE=$((NOW - LAST_ACTIVE))
+  echo "[watchdog] idle:$((IDLE / 60))/${idleTimeoutMin}min queue_busy:$BUSY"
+
+  if [ $IDLE -ge $IDLE_TIMEOUT ]; then
+    echo "=== Idle timeout reached (${idleTimeoutMin}min). Terminating pod. ==="
+    curl -s -X DELETE "https://rest.runpod.io/v1/pods/$RUNPOD_POD_ID" -H "Authorization: Bearer $RUNPOD_API_KEY"
+    sleep 3600
+  fi
+done
+`;
+}
+
 function buildStartupScript(
   proxyPort: number,
   targetPort: number,
@@ -122,12 +165,18 @@ function buildStartupScript(
   customNodes: CustomNode[],
   customNodesDir: string,
   preCommands: string[],
+  idleTimeoutMin: number,
 ): string {
   const customNodesScript = buildCustomNodesScript(customNodes, customNodesDir);
   const preCommandsScript =
     preCommands.length > 0
       ? `\necho "=== Running pre-commands ==="\n${preCommands.join("\n")}\n`
       : "";
+
+  const launchEntrypoint =
+    idleTimeoutMin > 0
+      ? `bash ${entrypoint} &\n${buildWatchdogLoop(idleTimeoutMin, targetPort)}`
+      : `exec bash ${entrypoint}`;
 
   return `
 set -e
@@ -151,7 +200,7 @@ EOF
 
 /tmp/caddy run --config /tmp/Caddyfile &
 ${customNodesScript}${preCommandsScript}
-exec bash ${entrypoint}
+${launchEntrypoint}
 `.trim();
 }
 
@@ -197,6 +246,7 @@ export async function start(config: Config) {
     config.customNodes,
     config.gpu.customNodesDir,
     config.gpu.preCommands,
+    config.gpu.idleTimeoutMin,
   );
 
   const pod = await client.createPod({
@@ -214,6 +264,9 @@ export async function start(config: Config) {
       ...config.gpu.env,
       AUTH_USERNAME,
       AUTH_PASSWORD: password,
+      ...(config.gpu.idleTimeoutMin > 0 && {
+        RUNPOD_API_KEY: config.tokens.runpodApiKey,
+      }),
     },
     dockerStartCmd: ["bash", "-c", startupScript],
   });

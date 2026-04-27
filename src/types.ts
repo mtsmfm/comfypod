@@ -42,6 +42,7 @@ export interface GpuConfigInput {
   customNodesDir?: string;
   preCommands?: string[];
   env?: Record<string, string>;
+  idleTimeoutMin?: number;
 }
 
 export interface GpuConfig {
@@ -55,6 +56,7 @@ export interface GpuConfig {
   customNodesDir: string;
   preCommands: string[];
   env: Record<string, string>;
+  idleTimeoutMin: number;
 }
 
 export interface NetworkVolumeConfigInput {
@@ -120,6 +122,7 @@ const defaults = {
     env: {
       CLI_ARGS: "--cache-lru 0",
     } as Record<string, string>,
+    idleTimeoutMin: 0,
   },
 };
 
@@ -154,6 +157,8 @@ export function defineConfig(input: ConfigInput): Config {
       customNodesDir: input.gpu.customNodesDir ?? defaults.gpu.customNodesDir,
       preCommands: input.gpu.preCommands ?? [],
       env: { ...defaults.gpu.env, ...input.gpu.env },
+      idleTimeoutMin:
+        input.gpu.idleTimeoutMin ?? defaults.gpu.idleTimeoutMin,
     },
     models: input.models ?? [],
     customNodes: input.customNodes ?? [],
