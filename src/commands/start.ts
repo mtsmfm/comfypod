@@ -126,6 +126,7 @@ set +e
 echo "=== Idle watchdog active (timeout: ${idleTimeoutMin}min) ==="
 IDLE_TIMEOUT=${timeoutSec}
 LAST_ACTIVE=$(date +%s)
+WAS_HEALTHY=0
 
 while true; do
   sleep 60
@@ -135,7 +136,13 @@ while true; do
   HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${targetPort}/ 2>/dev/null || echo "000")
   if [ "$HEALTH" != "200" ]; then
     LAST_ACTIVE=$NOW
+    WAS_HEALTHY=0
     continue
+  fi
+
+  if [ "$WAS_HEALTHY" = "0" ]; then
+    LAST_ACTIVE=$NOW
+    WAS_HEALTHY=1
   fi
 
   QUEUE=$(curl -s http://localhost:${targetPort}/queue 2>/dev/null || echo "")
