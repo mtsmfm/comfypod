@@ -127,6 +127,7 @@ echo "=== Idle watchdog active (timeout: ${idleTimeoutMin}min) ==="
 IDLE_TIMEOUT=${timeoutSec}
 LAST_ACTIVE=$(date +%s)
 WAS_HEALTHY=0
+LAST_HISTORY_SIZE=""
 
 while true; do
   sleep 60
@@ -137,6 +138,7 @@ while true; do
   if [ "$HEALTH" != "200" ]; then
     LAST_ACTIVE=$NOW
     WAS_HEALTHY=0
+    LAST_HISTORY_SIZE=""
     continue
   fi
 
@@ -149,12 +151,21 @@ while true; do
   BUSY=0
   echo "$QUEUE" | grep -q '\\[\\[' && BUSY=1
 
-  if [ "$BUSY" = "1" ]; then
+  HISTORY_SIZE=$(curl -s http://localhost:${targetPort}/history 2>/dev/null | wc -c)
+  HISTORY_CHANGED=0
+  if [ "$HISTORY_SIZE" -gt 0 ] && [ -n "$LAST_HISTORY_SIZE" ] && [ "$HISTORY_SIZE" != "$LAST_HISTORY_SIZE" ]; then
+    HISTORY_CHANGED=1
+  fi
+  if [ "$HISTORY_SIZE" -gt 0 ]; then
+    LAST_HISTORY_SIZE=$HISTORY_SIZE
+  fi
+
+  if [ "$BUSY" = "1" ] || [ "$HISTORY_CHANGED" = "1" ]; then
     LAST_ACTIVE=$NOW
   fi
 
   IDLE=$((NOW - LAST_ACTIVE))
-  echo "[watchdog] idle:$((IDLE / 60))/${idleTimeoutMin}min queue_busy:$BUSY"
+  echo "[watchdog] idle:$((IDLE / 60))/${idleTimeoutMin}min queue_busy:$BUSY history_changed:$HISTORY_CHANGED"
 
   if [ $IDLE -ge $IDLE_TIMEOUT ]; then
     echo "=== Idle timeout reached (${idleTimeoutMin}min). Terminating pod. ==="
