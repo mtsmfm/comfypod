@@ -125,7 +125,7 @@ function buildWatchdogLoop(
   return `
 set +e
 echo "=== Idle watchdog active (timeout: ${idleTimeoutMin}min) ==="
-echo "[watchdog] env: RUNPOD_POD_ID=\${RUNPOD_POD_ID:-MISSING} RUNPOD_API_KEY=\${RUNPOD_API_KEY:+set}"
+echo "[watchdog] env: RUNPOD_POD_ID=\${RUNPOD_POD_ID:-MISSING}"
 IDLE_TIMEOUT=${timeoutSec}
 LAST_ACTIVE=$(date +%s)
 WAS_HEALTHY=0
@@ -171,14 +171,13 @@ while true; do
 
   if [ $IDLE -ge $IDLE_TIMEOUT ]; then
     echo "=== Idle timeout reached (${idleTimeoutMin}min). Terminating pod. ==="
-    if [ -z "$RUNPOD_POD_ID" ] || [ -z "$RUNPOD_API_KEY" ]; then
-      echo "[watchdog] cannot terminate: RUNPOD_POD_ID or RUNPOD_API_KEY missing"
+    if [ -z "$RUNPOD_POD_ID" ]; then
+      echo "[watchdog] cannot terminate: RUNPOD_POD_ID missing"
     else
-      TERM_BODY=$(mktemp)
-      TERM_CODE=$(curl -sS -o "$TERM_BODY" -w "%{http_code}" -X DELETE "https://rest.runpod.io/v1/pods/$RUNPOD_POD_ID" -H "Authorization: Bearer $RUNPOD_API_KEY")
-      echo "[watchdog] terminate response: status=$TERM_CODE body=$(cat "$TERM_BODY")"
-      rm -f "$TERM_BODY"
-      if [ "$TERM_CODE" = "204" ] || [ "$TERM_CODE" = "200" ]; then
+      TERM_OUT=$(runpodctl remove pod "$RUNPOD_POD_ID" 2>&1)
+      TERM_RC=$?
+      echo "[watchdog] runpodctl remove pod: rc=$TERM_RC out=$TERM_OUT"
+      if [ $TERM_RC -eq 0 ]; then
         echo "[watchdog] termination accepted; waiting for shutdown"
         sleep 3600
       else
@@ -296,9 +295,6 @@ export async function start(config: Config) {
       ...config.gpu.env,
       AUTH_USERNAME,
       AUTH_PASSWORD: password,
-      ...(config.gpu.idleTimeoutMin > 0 && {
-        RUNPOD_API_KEY: config.tokens.runpodApiKey,
-      }),
     },
     dockerStartCmd: ["bash", "-c", startupScript],
   });
