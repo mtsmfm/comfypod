@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import { RunpodClient } from "../runpod.js";
 import type { Config, CustomNode } from "../types.js";
 import { createSpinner } from "../spinner.js";
+import { notify } from "../notify.js";
 
 const AUTH_USERNAME = "admin";
 
@@ -124,6 +125,7 @@ function buildWatchdogLoop(
   return `
 set +e
 echo "=== Idle watchdog active (timeout: ${idleTimeoutMin}min) ==="
+echo "[watchdog] env: RUNPOD_POD_ID=\${RUNPOD_POD_ID:-MISSING} RUNPOD_API_KEY=\${RUNPOD_API_KEY:+set}"
 IDLE_TIMEOUT=${timeoutSec}
 LAST_ACTIVE=$(date +%s)
 WAS_HEALTHY=0
@@ -169,8 +171,20 @@ while true; do
 
   if [ $IDLE -ge $IDLE_TIMEOUT ]; then
     echo "=== Idle timeout reached (${idleTimeoutMin}min). Terminating pod. ==="
-    curl -s -X DELETE "https://rest.runpod.io/v1/pods/$RUNPOD_POD_ID" -H "Authorization: Bearer $RUNPOD_API_KEY"
-    sleep 3600
+    if [ -z "$RUNPOD_POD_ID" ] || [ -z "$RUNPOD_API_KEY" ]; then
+      echo "[watchdog] cannot terminate: RUNPOD_POD_ID or RUNPOD_API_KEY missing"
+    else
+      TERM_BODY=$(mktemp)
+      TERM_CODE=$(curl -sS -o "$TERM_BODY" -w "%{http_code}" -X DELETE "https://rest.runpod.io/v1/pods/$RUNPOD_POD_ID" -H "Authorization: Bearer $RUNPOD_API_KEY")
+      echo "[watchdog] terminate response: status=$TERM_CODE body=$(cat "$TERM_BODY")"
+      rm -f "$TERM_BODY"
+      if [ "$TERM_CODE" = "204" ] || [ "$TERM_CODE" = "200" ]; then
+        echo "[watchdog] termination accepted; waiting for shutdown"
+        sleep 3600
+      else
+        echo "[watchdog] termination failed; will retry on next check"
+      fi
+    fi
   fi
 done
 `;
@@ -307,4 +321,9 @@ export async function start(config: Config) {
   console.log("");
   console.log("ComfyUI is ready!");
   console.log(`  URL: ${authUrl}`);
+
+  notify({
+    title: "ComfyUI",
+    message: `Pod is ready: ${authUrl}`,
+  });
 }
